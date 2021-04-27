@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Users from './components/users/Users';
+import User from './components/users/User';
 import Search from './components/users/Search';
 import Alert from './components/layout/Alert';
 import About from './components/pages/About';
@@ -11,6 +12,8 @@ import './App.css';
 class App extends React.Component {
   state = {
     users: [],
+    user: {},
+    repos: [],
     loading: false,
     alert: null,
   };
@@ -32,8 +35,24 @@ class App extends React.Component {
     }, 3000);
   };
 
+  getUser = async username => {
+    this.setState({ loading: true });
+    const response = await axios.get(
+      `https://api.github.com/users/${username}?client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&client_secret=${process.env.REACT_APP_GITHUB_CLIENT_SECRET}`
+    );
+    this.setState({ user: response.data, loading: false });
+  };
+
+  getUserRepos = async username => {
+    this.setState({ loading: true });
+    const response = await axios.get(
+      `https://api.github.com/users/${username}/repos?per_page=5&sort=created:asc&client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&client_secret=${process.env.REACT_APP_GITHUB_CLIENT_SECRET}`
+    );
+    this.setState({ repos: response.data, loading: false });
+  };
+
   render() {
-    const { loading, users, alert } = this.state;
+    const { loading, users, user, alert, repos } = this.state;
 
     return (
       <Router>
@@ -58,6 +77,20 @@ class App extends React.Component {
                 )}
               />
               <Route exact path='/about' component={About} />
+              <Route
+                exact
+                path='/user/:login'
+                render={props => (
+                  <User
+                    {...props}
+                    getUser={this.getUser}
+                    getUserRepos={this.getUserRepos}
+                    user={user}
+                    repos={repos}
+                    loading={loading}
+                  />
+                )}
+              />
             </Switch>
           </div>
         </div>
